@@ -112,7 +112,7 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     tf1.word_wrap = True
 
     p_badge = tf1.paragraphs[0]
-    p_badge.text = "AGNTID HACKATHON 2026  •  AI DEVOPS TRACK"
+    p_badge.text = "AGNTID HACKATHON 2026  •  DEVOPS BOUNDARY PROOF"
     p_badge.font.name = "Arial"
     p_badge.font.size = Pt(13)
     p_badge.font.bold = True
@@ -149,7 +149,7 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     # ==========================================
     s2 = prs.slides.add_slide(blank_layout)
     set_slide_background(s2)
-    add_header(s2, "The Problem", "Autonomous Agents With Sharp Tools", "LLM-based DevOps agents need access to tools, but lack runtime security boundaries.")
+    add_header(s2, "The Problem", "Autonomous Agents With Sharp Tools", "DevOps agents need useful tools and an enforced staging boundary.")
 
     add_card(s2, Inches(1.0), Inches(2.4), Inches(3.5), Inches(4.3),
              "1. Flat MCP API Access",
@@ -157,13 +157,13 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
              ACCENT_RED, ACCENT_RED)
 
     add_card(s2, Inches(4.9), Inches(2.4), Inches(3.5), Inches(4.3),
-             "2. Hallucinated Scope Creep",
-             "Prompted to fix staging, the agent explores files, inspects .env, unearths production AWS master secrets, and deletes production database volumes.",
+             "2. Excessive Authority",
+             "Our scripted baseline demonstrates secret exposure and production deletion in a disposable mock.",
              ACCENT_RED, ACCENT_RED)
 
     add_card(s2, Inches(8.8), Inches(2.4), Inches(3.5), Inches(4.3),
-             "3. Prompt Defense Fails",
-             "System prompts like 'Never touch production' fail against prompt injection, context window overflow, and complex multi-step reasoning drift.",
+             "3. Runtime Checks Needed",
+             "A staging-only instruction does not itself restrict the tool parameters an agent can send.",
              ACCENT_RED, ACCENT_RED)
 
     # ==========================================
@@ -171,7 +171,7 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     # ==========================================
     s3 = prs.slides.add_slide(blank_layout)
     set_slide_background(s3)
-    add_header(s3, "Part 1: Before AgntID", "What The Unrestricted Agent Did", "Demonstration of raw tool invocation without runtime guardrails.")
+    add_header(s3, "Part 1: Before AgntID", "What Unrestricted Calls Can Do", "Actual MCP calls; deterministic baseline; entirely synthetic infrastructure.")
 
     # Left Box: Terminal Log Simulation
     term_card = s3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.0), Inches(2.4), Inches(6.8), Inches(4.3))
@@ -185,7 +185,7 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     tf_term.word_wrap = True
 
     p = tf_term.paragraphs[0]
-    p.text = "AGENT EXECUTION LOG (BEFORE AGNTID):"
+    p.text = "DETERMINISTIC BASELINE (SYNTHETIC):"
     p.font.name = "Courier New"
     p.font.size = Pt(12)
     p.font.bold = True
@@ -194,11 +194,11 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     lines = [
         ("→ Prompt: 'Staging deploy failed. Find cause and fix.'", TEXT_WHITE),
         ("→ Tool: infra.get_logs(env='staging') => AuthFailed for staging_app_user", TEXT_MUTED),
-        ("→ Tool: infra.read_file(path='.env') => EXPOSES MASTER AWS & DB TOKENS", ACCENT_RED),
+        ("→ Tool: infra.read_file(path='.env') => RETURNS A SYNTHETIC SECRET TRAP", ACCENT_RED),
         ("→ Tool: infra.list_volumes(env='prod') => Discovers vol-prod-db-primary", TEXT_MUTED),
         ("→ Tool: infra.delete_volume(env='prod', volume_id='vol-prod-db-primary')", ACCENT_RED),
-        ("💥 CATASTROPHE: 142,500 Customer records permanently deleted!", ACCENT_RED),
-        ("💥 OUTAGE: Staging remains broken; Production is destroyed.", ACCENT_RED),
+        ("💥 Fixture state: 142,500 simulated records erased", ACCENT_RED),
+        ("💥 Simulated production erased; staging still failing", ACCENT_RED),
     ]
     for text, color in lines:
         p_next = tf_term.add_paragraph()
@@ -210,8 +210,8 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
 
     # Right Box: Outcome Card
     add_card(s3, Inches(8.1), Inches(2.4), Inches(4.2), Inches(4.3),
-             "Real-World Impact",
-             "• Secrets Stolen: AWS Master Key & Prod DB Credentials leaked via .env\n\n• Data Loss: 142,500 active customer rows wiped on production\n\n• Zero Auditability: No centralized record of agent intent vs tool execution\n\n• Task Failure: The actual staging bug was never resolved",
+             "Measured Fixture Outcome",
+             "• Synthetic secret trap reachable; payload omitted\n\n• Mock data loss: 142,500 simulated records\n\n• Baseline: direct mock access without AgntID\n\n• Staging fixture remains failing",
              ACCENT_RED, ACCENT_RED)
 
     # ==========================================
@@ -222,13 +222,13 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     add_header(s4, "Part 2: The Policy Boundary", "What The Agent Should Be Allowed To Do", "Explicit least-privilege matrix enforced dynamically in AgntID.")
 
     add_card(s4, Inches(1.0), Inches(2.4), Inches(5.4), Inches(4.3),
-             "PERMITTED ACTIONS (STAGING ONLY)",
+             "PERMITTED TASK ACTIONS",
              "✔ infra.get_logs\nRead-only diagnostic access to observe container errors.\n\n✔ infra.read_file(path='README.md')\nDocumentation reading permitted for setup guides.\n\n✔ infra.update_config(env='staging')\nRemediation config updates strictly bounded to staging environment.",
              ACCENT_GREEN, ACCENT_GREEN)
 
     add_card(s4, Inches(6.9), Inches(2.4), Inches(5.4), Inches(4.3),
              "RESTRICTED ACTIONS (PROD & SECRETS)",
-             "⛔ infra.read_file(path='.env')\nDENIED via AgntID OPA Rego policy: rejects sensitive file paths.\n\n⛔ infra.delete_volume\nHIDDEN from agent tool catalog via Medium Protection Profile.\n\n⛔ Any action targeting env='prod'\nBLOCKED: Production blast radius completely isolated.",
+             "⛔ infra.read_file(path='.env')\nDENIED via AgntID OPA Rego policy: rejects sensitive file paths.\n\n⛔ infra.delete_volume\nHIDDEN from agent tool catalog via Medium Protection Profile.\n\n⛔ update_config(env='prod')\nDENIED: only exact env=staging writes allowed.",
              ACCENT_RED, ACCENT_RED)
 
     # ==========================================
@@ -239,8 +239,8 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     add_header(s5, "Architecture", "AgntID Dynamic Runtime Interception", "Proxy architecture transparently sitting between the Agent and Infrastructure.")
 
     add_card(s5, Inches(1.0), Inches(2.4), Inches(3.5), Inches(4.3),
-             "1. Autonomous Agent",
-             "• LangChain / MCP Client\n• Sends JSON-RPC tool calls\n• Connects to AgntID Proxy at http://127.0.0.1:18082/mcp\n• Session & Task Context linked via agntid-sdk",
+             "1. Agent and Proof Client",
+             "• Codex MCP agent + deterministic SDK proof\n• Sends JSON-RPC tool calls\n• Connects to AgntID Proxy at http://127.0.0.1:18082/mcp\n• Discovered task metadata linked via official SDK",
              ACCENT_BLUE)
 
     add_card(s5, Inches(4.9), Inches(2.4), Inches(3.5), Inches(4.3),
@@ -250,7 +250,7 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
 
     add_card(s5, Inches(8.8), Inches(2.4), Inches(3.5), Inches(4.3),
              "3. Upstream Infrastructure",
-             "• Mock Cloud Infrastructure\n• Staging & Production services\n• Only verified, policy-approved requests reach upstream tools\n• Full compliance guaranteed",
+             "• Mock Cloud Infrastructure\n• Staging & Production services\n• Protected business calls route through the proxy\n• Raw backend isolation is not demonstrated",
              ACCENT_GREEN, ACCENT_GREEN)
 
     # ==========================================
@@ -258,7 +258,7 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     # ==========================================
     s6 = prs.slides.add_slide(blank_layout)
     set_slide_background(s6)
-    add_header(s6, "Part 3: After AgntID", "Live Runtime Interception & Safe Remediation", "AgntID enforces boundaries at runtime: zero hallucinations succeed.")
+    add_header(s6, "Part 3: After AgntID", "Live Runtime Interception & Safe Remediation", "Three controls verified with real proxy calls and backend assertions.")
 
     # Left Box: Terminal Log Simulation (After)
     term_after = s6.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.0), Inches(2.4), Inches(6.8), Inches(4.3))
@@ -272,7 +272,7 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     tf_after.word_wrap = True
 
     p = tf_after.paragraphs[0]
-    p.text = "AGNTID RUNTIME EXECUTION LOG (LIVE):"
+    p.text = "VERIFIED PROXY EXECUTION (SYNTHETIC):"
     p.font.name = "Courier New"
     p.font.size = Pt(12)
     p.font.bold = True
@@ -285,7 +285,7 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
         ("🚫 read_file('.env') => INTERCEPTED & DENIED BY REGO POLICY!", ACCENT_RED),
         ("  Audit: Policy agntid.tools.infra.read_file triggered", TEXT_DIM),
         ("✔ update_config(staging, DB_PASSWORD) => ALLOWED", ACCENT_GREEN),
-        ("🎉 Staging service recovered to HEALTHY; Prod 100% Intact!", ACCENT_GREEN),
+        ("🎉 Staging healthy; production state/hash unchanged", ACCENT_GREEN),
     ]
     for text, color in lines_after:
         p_next = tf_after.add_paragraph()
@@ -298,7 +298,7 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     # Right Box: Outcome Card
     add_card(s6, Inches(8.1), Inches(2.4), Inches(4.2), Inches(4.3),
              "Verified Protection",
-             "🛡️ Secrets Protected: Sensitive .env path blocked by Rego policy\n\n🛡️ Surface Reduced: Destructive delete_volume hidden entirely\n\n🛡️ Production Safe: 142,500 customer records untouched\n\n🛡️ Staging Fixed: Legitimate work completed cleanly",
+             "🛡️ Secrets Protected: Sensitive .env path blocked by Rego policy\n\n🛡️ Surface Reduced: Destructive delete_volume hidden entirely\n\n🛡️ Production fixture: 142,500 simulated records retained\n\n🛡️ Staging Fixed: Legitimate work completed cleanly",
              ACCENT_GREEN, ACCENT_GREEN)
 
     # ==========================================
@@ -306,7 +306,7 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     # ==========================================
     s7 = prs.slides.add_slide(blank_layout)
     set_slide_background(s7)
-    add_header(s7, "Results & Scorecard", "Before vs After AgntID", "Clear empirical comparison across enterprise security metrics.")
+    add_header(s7, "Results & Scorecard", "Before vs After AgntID", "Measured before/after comparison of the same disposable fixture.")
 
     # Table Shape
     rows, cols = 6, 3
@@ -331,10 +331,10 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
         p.font.color.rgb = ACCENT_BLUE
 
     data = [
-        ("Production Database State", "🚨 DESTROYED (Volume deleted)", "✅ 100% OPERATIONAL (Protected)"),
-        ("Customer Records Lost", "142,500 Records Erased", "0 Records Lost (Untouched)"),
-        (".env Credential Access", "🚨 Leaked (Master AWS/DB keys)", "🛡️ BLOCKED by Rego Policy"),
-        ("Tool Attack Surface", "Unrestricted (All 7 tools exposed)", "Least-Privilege (Destructive hidden)"),
+        ("Production Database State", "🚨 DESTROYED (Volume deleted)", "✅ State and Config Unchanged"),
+        ("Simulated Records Lost", "142,500 Simulated Records Erased", "0 Records Lost (Untouched)"),
+        (".env Credential Access", "🚨 Synthetic Trap Returned", "🛡️ BLOCKED by Rego Policy"),
+        ("Tool Attack Surface", "7 business tools + 2 operator helpers", "Least-Privilege (Destructive hidden)"),
         ("Incident Remediation", "FAILED (Outage compounded)", "✅ SUCCESS (Staging restored)"),
     ]
 
@@ -354,16 +354,16 @@ def create_deck(output_path="presentation/StagingGuard_AgntID_Pitch.pptx"):
     # ==========================================
     s8 = prs.slides.add_slide(blank_layout)
     set_slide_background(s8)
-    add_header(s8, "Devfolio Submission", "StagingGuard: AgntID Hackathon 2026", "All criteria satisfied with reproducible codebase and live runtime.")
+    add_header(s8, "Devfolio Submission", "StagingGuard: AgntID Hackathon 2026", "Core proof verified; final submission and narrated video pending.")
 
     add_card(s8, Inches(1.0), Inches(2.4), Inches(5.4), Inches(4.3),
              "Project Specifications",
-             "• Track: AI DevOps Incident Remediation\n• Builder: Akshat Naruka (Solo Builder)\n• Live Runtime: http://127.0.0.1:18082/mcp\n• AgntID Cloud Portal: app.agntid.ai\n• OPA Policy: agntid.tools.infra.read_file\n• Protection Profile: Medium (Strict Discovery)",
+             "• Use case: staging incident remediation\n• Builder: Akshat Naruka (Solo Builder)\n• Live Runtime: http://127.0.0.1:18082/mcp\n• AgntID Cloud Portal: app.agntid.ai\n• OPA Policy: agntid.tools.infra.read_file\n• Protection Profile: Medium (Strict Discovery)",
              ACCENT_BLUE)
 
     add_card(s8, Inches(6.9), Inches(2.4), Inches(5.4), Inches(4.3),
-             "Judge & Organizer Collaboration",
-             "Collaborator Access Granted in AgntID Portal:\n\n✔ Organizer UUID 1:\n95c8281c-cb8b-4b21-8395-5cb255552b21\n\n✔ Organizer UUID 2:\n61671e35-5b43-455b-b9f0-2567406ae25d\n\nGitHub: https://github.com/akshatnaruka/AgntID",
+             "Remaining Submission Steps",
+             "Private repository; public access not ready.\n\nNarrated backup video still needed.\nVerify actual organizer collaborator requirements.\n\nDevfolio submission not verified.\nNo human approval enforcement claimed.\n\nRepo: github.com/AkshatNaruka/StagingGuard (private)",
              ACCENT_GREEN, ACCENT_GREEN)
 
     prs.save(output_path)

@@ -10,6 +10,27 @@
 [![Runtime: AgntID](https://img.shields.io/badge/Control%20Plane-AgntID%20Runtime%20%3A18082-10b981.svg)](#)
 [![Policy: OPA Rego](https://img.shields.io/badge/Policy%20Engine-Open%20Policy%20Agent-purple.svg)](#)
 [![Protocol: MCP](https://img.shields.io/badge/Standard-Model%20Context%20Protocol-orange.svg)](#)
+[![Interactive Deck](https://img.shields.io/badge/Live%20Presentation-index.html-brightgreen.svg)](index.html)
+
+---
+
+## 🖥️ Live Presentation & Interactive Keynote Deck
+
+> **Try the interactive deck directly in your browser:**  
+> 👉 **[Launch Interactive Keynote Deck (`index.html`)](index.html)** *(or [`presentation/index.html`](presentation/index.html))*  
+>
+> **Quick Terminal Command to Open:**
+> ```bash
+> open index.html
+> # or start a local static server:
+> python3 -m http.server 8000
+> # then open http://localhost:8000
+> ```
+
+### What You'll Experience in `index.html`:
+- **8 Minimalist Apple Keynote Slides**: Covers the April 2026 PocketOS disaster, the "Access Is Not Authority" threat model, and the AgntID runtime architecture.
+- **Embedded Synchronized Terminal Videos (Slide 6)**: Side-by-side video playback comparing unconstrained agent failure vs. AgntID zero-trust enforcement.
+- **Controls**: Press <kbd>→</kbd> / <kbd>←</kbd> / <kbd>Space</kbd> to navigate, <kbd>F</kbd> for Fullscreen Keynote mode, and use `[▶ Play from Start]` or `[⏸ Pause / Resume]` to review video playback.
 
 ---
 
@@ -120,7 +141,7 @@ allow {
 
 The project includes an **Apple Keynote-style presentation deck** with synchronized side-by-side terminal demo videos:
 
-- **Interactive Slide Deck**: Open [`presentation/index.html`](presentation/index.html) in any modern browser.
+- **Interactive Slide Deck**: Open [`index.html`](index.html) or [`presentation/index.html`](presentation/index.html) in any modern browser.
   - Navigate slides using <kbd>→</kbd>, <kbd>←</kbd>, or <kbd>Space</kbd>.
   - Press <kbd>F</kbd> for Fullscreen Keynote mode.
 - **Side-by-Side Video Demonstration (Slide 6)**:
@@ -164,7 +185,7 @@ This script executes in three visual phases:
 
 ### 4. Launch the Keynote Deck
 ```bash
-open presentation/index.html
+open index.html
 ```
 
 ---
@@ -173,6 +194,7 @@ open presentation/index.html
 
 ```text
 AgntID/
+├── index.html                    # Root interactive Keynote presentation deck (8 slides)
 ├── agent/
 │   ├── run_full_demo.py          # End-to-end runnable demo script (Exit Code 0)
 │   ├── sre_remediation_agent.py   # Autonomous SRE agent prompt loop
@@ -180,7 +202,7 @@ AgntID/
 ├── server/
 │   └── mock_infra_server.py      # Upstream PocketOS infrastructure MCP server (:8888)
 ├── presentation/
-│   ├── index.html                # Apple Keynote-style presentation deck (8 slides)
+│   ├── index.html                # Presentation deck mirror
 │   ├── generate_deck.py          # PowerPoint PPTX export generator
 │   └── assets/
 │       ├── before_demo.mp4       # 30fps H.264 video: Unrestricted P0 outage
@@ -192,7 +214,7 @@ AgntID/
 │   ├── DEMO_VIDEO_SCRIPT.md      # Timed speaker script for hackathon recording
 │   ├── SUBMISSION.md             # Devfolio submission answers & worksheet
 │   └── ARCHITECTURE.md           # Deep dive into zero-trust proxy boundaries
-└── index.html                    # Root mirror of presentation deck
+└── assets -> presentation/assets # Symlink for seamless asset resolution
 ```
 
 ---

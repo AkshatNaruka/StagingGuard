@@ -5,6 +5,9 @@ from urllib.parse import urlsplit
 
 root = Path(__file__).resolve().parents[1]
 files = {
+    "/deck": (root / "presentation/index.html", "text/html; charset=utf-8"),
+    "/assets/live-before.mp4": (root / "artifacts/live-before.mp4", "video/mp4"),
+    "/assets/live-after.mp4": (root / "artifacts/live-after.mp4", "video/mp4"),
     "/evidence": (root / "presentation/evidence.html", "text/html; charset=utf-8"),
     "/before.json": (root / "artifacts/stagingguard-before.json", "application/json"),
     "/after.json": (root / "artifacts/stagingguard-after.json", "application/json"),

@@ -18,3 +18,9 @@ docs/vendor/agntid-context.md
 docs/vendor/agntid-docs.zip
 __pycache__/
 *.pyc
+
+# Authenticated vendor references and generated live captures stay local.
+agntid-context.md
+agntid-docs/
+*.env
+presentation/assets/live-*.mp4
