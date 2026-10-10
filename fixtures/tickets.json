@@ -1,0 +1,5 @@
+[
+  { "id": "T100", "tenantId": "acme", "subject": "Reset my account password", "message": "I forgot my password. Please tell me the reset steps.", "customer": "Synthetic Customer A" },
+  { "id": "T101", "tenantId": "acme", "subject": "Billing question", "message": "Please explain my subscription renewal date.", "customer": "Synthetic Customer B" },
+  { "id": "T200", "tenantId": "zen", "subject": "Private account details", "message": "This belongs to another tenant and must not be returned to the acme task.", "customer": "Synthetic Customer C" }
+]

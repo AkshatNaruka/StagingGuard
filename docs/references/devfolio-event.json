@@ -1,0 +1,23 @@
+{
+  "uuid": "0accc07e777b4f9cbd8c110f19454abd",
+  "name": "AgntID Hackathon",
+  "slug": "agntid",
+  "tagline": null,
+  "desc": "Build something useful. Then make it safe enough to trust.\n\n​Imagine an AI agent investigating production incidents, accessing sensitive data or performing financial transactions. It has the tools it needs. But what happens when it attempts an action outside its intended task?\n\n​Join 25–30 experienced builders for a hands-on hackathon. Build a useful AI agent, then explore how to enforce its access boundaries at runtime using [AgntID](https://agntid.ai/).\n\n## ​🎯  The Challenge:\n​Build a real-world AI agent, or team of agents, that performs meaningful work using one or more external tools.\n\n​Then identify where unrestricted access creates risk. Decide which actions, resources and parameters your agent should be allowed to access, and under what conditions. Use AgntID to enforce those boundaries during execution.\n\n## Your final demo should show:\n\n- What your agent could do before.\n- What it should actually be allowed to do.\n- How AgntID enforces that boundary at runtime.\n\n## At minimum, demonstrate:\n- A useful, working AI agent or agentic workflow\n- One or more external tools\n- Permitted and restricted actions\n- AgntID enforcing those boundaries during execution\n- A clear before-and-after demonstration\n\n## 💡Need Inspiration?\n\n- Build an AI Finance Assistant that retrieves financial data and processes approved transactions, with permissions changing by task.\n- Build an AI Customer Support Agent that resolves requests while enforcing boundaries around customer records and sensitive actions.\n\nOr bring your own meaningful agentic workflow.\n\n## 🏆 Prize\n​A MacBook Neo for the winning team! \n\n## 🗓️ Schedule\n- 10:00 AM - Check-ins\n- ​11:00 AM - Opening\n- 11:15 AM - Technical walkthrough + security session\n- 12:00 PM - Hacking begins\n- ​3:00 PM - Demos\n- 4:30 PM - Closing & Awards",
+  "starts_at": "2026-10-10T05:30:00.000Z",
+  "ends_at": "2026-10-10T10:30:00.000Z",
+  "timezone": "Asia/Calcutta",
+  "is_online": true,
+  "location": "2586Labs, 100 Feet Road, Indira Nagar 1st Stage, Stage 1, Indiranagar, Bengaluru, Karnataka, India",
+  "apply_mode": "both",
+  "team_min": 1,
+  "team_size": 1,
+  "browserUrl": "https://agntid.devfolio.co/application",
+  "settings": {
+    "reg_starts_at": "2026-10-07T11:30:00.000Z",
+    "reg_ends_at": "2026-10-10T10:30:00.000Z",
+    "external_apply_url": null,
+    "coc_url": "https://devfolio.co/code-of-conduct",
+    "tnc_url": "https://devfolio.co/terms-and-conditions"
+  }
+}

@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StagingGuard — Zero-Trust Runtime Access Control for SRE Agents</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2L3 6.5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12v-6L12 2z'/><rect x='8' y='9' width='8' height='6' rx='1'/><circle cx='10' cy='12' r='0.75' fill='white'/><circle cx='14' cy='12' r='0.75' fill='white'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000000;
+      --surface-1: #0a0a0c;
+      --surface-2: #121216;
+      --surface-3: #1a1a20;
+      --border: #222228;
+      --border-subtle: #18181f;
+      --border-hover: #3a3a44;
+      --text-1: #f4f4f5;
+      --text-2: #8e8e99;
+      --text-3: #52525b;
+      --danger: #ef4444;
+      --danger-subtle: rgba(239, 68, 68, 0.08);
+      --danger-border: rgba(239, 68, 68, 0.3);
+      --success: #10b981;
+      --success-subtle: rgba(16, 185, 129, 0.08);
+      --success-border: rgba(16, 185, 129, 0.3);
+      --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      --font-mono: 'Geist Mono', 'SF Pro Text', Menlo, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text-1);
+      font-family: var(--font-sans);
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Ambient background grid */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(circle at 50% 30%, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 80%);
+      -webkit-mask-image: radial-gradient(circle at 50% 30%, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 80%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top persistent minimal bar */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      padding: 0 40px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-logo {
+      width: 20px;
+      height: 20px;
+      color: var(--text-1);
+      display: block;
+    }
+
+    .brand-divider {
+      color: var(--text-3);
+      font-weight: 300;
+    }
+
+    .brand-sub {
+      color: var(--text-2);
+      font-size: 0.85rem;
+      font-weight: 400;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-2);
+      padding: 4px 12px;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+    }
+
+    .nav-btn {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      color: var(--text-1);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover {
+      background: var(--surface-2);
+      border-color: var(--border-hover);
+    }
+
+    /* Slide Deck Container (Apple Keynote full viewport style) */
+    .deck {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 80px 48px 60px;
+      opacity: 0;
+      transform: scale(0.98) translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+
+    .slide-inner {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* Apple-Style Micro Badges */
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-2);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background: var(--surface-1);
+      margin-bottom: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .eyebrow.red {
+      color: var(--danger);
+      border-color: var(--danger-border);
+      background: var(--danger-subtle);
+    }
+
+    .eyebrow.green {
+      color: var(--success);
+      border-color: var(--success-border);
+      background: var(--success-subtle);
+    }
+
+    /* Apple Headline Typography */
+    h1.hero-title {
+      font-size: 5.2rem;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+      margin-bottom: 20px;
+      background: linear-gradient(180deg, #ffffff 40%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      max-width: 1100px;
+    }
+
+    h2.slide-title {
+      font-size: 3.6rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 14px;
+      color: var(--text-1);
+      max-width: 1100px;
+    }
+
+    p.slide-sub {
+      font-size: 1.35rem;
+      color: var(--text-2);
+      max-width: 780px;
+      line-height: 1.5;
+      margin-bottom: 40px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+
+    /* Apple Big Stat Metrics Grid */
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      width: 100%;
+      max-width: 1040px;
+      margin-top: 10px;
+    }
+
+    .stat-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px 24px;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .stat-num {
+      font-size: 3.4rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 8px;
+      color: var(--text-1);
+    }
+
+    .stat-num.red { color: var(--danger); }
+    .stat-num.green { color: var(--success); }
+
+    .stat-label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-1);
+      margin-bottom: 4px;
+    }
+
+    .stat-desc {
+      font-size: 0.85rem;
+      color: var(--text-2);
+      line-height: 1.4;
+    }
+
+    /* SLIDE: BEFORE VS AFTER SIDE-BY-SIDE VIDEO PLAYERS */
+    .compare-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      width: 100%;
+      max-width: 1200px;
+      margin-top: 4px;
+    }
+
+    .video-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      transition: border-color 0.2s ease;
+    }
+
+    .video-card.before {
+      border-color: var(--danger-border);
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.05);
+    }
+
+    .video-card.after {
+      border-color: var(--success-border);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.05);
+    }
+
+    .video-header {
+      padding: 14px 20px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .video-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .video-wrapper video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .video-progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 10;
+    }
+
+    .video-progress-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    .video-card.before .video-progress-fill {
+      background: var(--danger);
+    }
+
+    .video-card.after .video-progress-fill {
+      background: var(--success);
+    }
+
+    .video-footer {
+      padding: 16px 20px;
+      background: var(--surface-1);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .metric-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.84rem;
+    }
+
+    .metric-row .name { color: var(--text-2); }
+    .metric-row .val { font-family: var(--font-mono); font-weight: 600; }
+    .metric-row .val.red { color: var(--danger); }
+    .metric-row .val.green { color: var(--success); }
+
+    /* Video controls bar */
+    .video-playback-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .play-sync-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-1);
+      padding: 8px 20px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      font-family: var(--font-sans);
+    }
+
+    .play-sync-btn:hover {
+      background: var(--surface-3);
+      border-color: var(--border-hover);
+    }
+
+    .play-sync-btn.primary {
+      background: #ededed;
+      color: #000000;
+      border-color: #ffffff;
+      font-weight: 600;
+    }
+
+    .play-sync-btn.primary:hover {
+      background: #ffffff;
+    }
+
+    /* Architecture Visual Diagram */
+    .arch-diagram {
+      width: 100%;
+      max-width: 1080px;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 36px 28px;
+      display: grid;
+      grid-template-columns: 1fr 60px 1.4fr 60px 1fr;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .arch-node {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .arch-node.highlight {
+      background: linear-gradient(180deg, var(--surface-3) 0%, var(--surface-2) 100%);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .arch-icon {
+      width: 32px;
+      height: 32px;
+      margin: 0 auto 12px;
+      color: var(--text-1);
+    }
+
+    .arch-node-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-1);
+    }
+
+    .arch-node-desc {
+      font-size: 0.78rem;
+      color: var(--text-2);
+      font-family: var(--font-mono);
+      line-height: 1.4;
+    }
+
+    .arch-arrow {
+      color: var(--text-3);
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Table Component */
+    .clean-table-box {
+      width: 100%;
+      max-width: 1080px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--surface-1);
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    th {
+      background: var(--surface-2);
+      color: var(--text-2);
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-family: var(--font-mono);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    /* Bottom Slide Dots */
+    .deck-controls {
+      position: fixed;
+      bottom: 24px;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dot.active {
+      width: 24px;
+      border-radius: 4px;
+      background: #ffffff;
+    }
+
+    .kbd-hint {
+      position: fixed;
+      bottom: 26px;
+      right: 40px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-3);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    kbd {
+      padding: 2px 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface-1);
+      color: var(--text-2);
+    }
+
+    .tl {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      width: 100%;
+      max-width: 1180px;
+      position: relative;
+      margin-top: 6px;
+    }
+
+    .tl::before {
+      content: "";
+      position: absolute;
+      top: 22px;
+      left: 6%;
+      right: 6%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--border), var(--danger));
+      z-index: 0;
+    }
+
+    .tl-step {
+      position: relative;
+      z-index: 1;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 14px 18px;
+      text-align: left;
+    }
+
+    .tl-step.hot {
+      border-color: var(--danger-border);
+      background: var(--danger-subtle);
+    }
+
+    .tl-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 1px solid var(--border-hover);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: 600 .72rem var(--font-mono);
+      color: var(--text-2);
+      margin-bottom: 12px;
+    }
+
+    .tl-step.hot .tl-dot {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .tl-t {
+      font-weight: 600;
+      font-size: .95rem;
+      margin-bottom: 6px;
+      letter-spacing: -.01em;
+    }
+
+    .tl-d {
+      font-size: .8rem;
+      color: var(--text-2);
+      line-height: 1.45;
+    }
+
+    .src-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 26px;
+      font: .72rem var(--font-mono);
+      color: var(--text-3);
+    }
+
+    .src-row span {
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 3px 10px;
+      background: var(--surface-1);
+    }
+
+    .src-row span.also {
+      color: var(--danger);
+      border-color: var(--danger-border);
+    }
+
+    .note {
+      margin-top: 22px;
+      font: .8rem var(--font-mono);
+      color: var(--text-3);
+      max-width: 760px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <!-- Persistent Minimal Header -->
+  <header>
+    <div class="brand">
+      <svg class="brand-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L3 6.5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12v-6L12 2z"/>
+        <rect x="8" y="9" width="8" height="6" rx="1"/>
+        <circle cx="10" cy="12" r="0.75" fill="currentColor"/>
+        <circle cx="14" cy="12" r="0.75" fill="currentColor"/>
+      </svg>
+      <span>StagingGuard</span>
+      <span class="brand-divider">/</span>
+      <span class="brand-sub">AgntID Runtime Access Control</span>
+    </div>
+
+    <div class="header-nav">
+      <span class="slide-counter" id="slide-num">01 / 08</span>
+      <button class="nav-btn" onclick="prevSlide()" title="Previous slide (Left Arrow)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <button class="nav-btn" onclick="nextSlide()" title="Next slide (Right Arrow / Space)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
+      <a href="https://app.agntid.ai" target="_blank" class="nav-btn" style="width: auto; padding: 0 12px; gap: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 500;" title="Open AgntID Portal">
+        Control Plane
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 17L17 7M17 7H7M17 7V17"/>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- Slide Deck Container (8 Apple Keynote Slides) -->
+  <div class="deck">
+
+    <!-- SLIDE 1: HERO -->
+    <section class="slide active" id="slide-1">
+      <div class="slide-inner">
+        <div class="eyebrow">AgntID Hackathon 2026 &bull; AI DevOps Track</div>
+        <h1 class="hero-title">Zero-Trust Runtime Control for SRE Agents.</h1>
+        <p class="slide-sub">
+          In April 2026 a coding agent fixing a staging bug deleted a company's production database and its backups. Prompts did not stop it. Runtime enforcement would have.
+        </p>
+
+        <div class="hero-stats">
+          <div class="stat-card">
+            <div class="stat-num red">9s</div>
+            <div class="stat-label">Real Incident, Real Speed</div>
+            <div class="stat-desc">Time a real agent needed to wipe a production volume and its backups (PocketOS, Apr 2026).</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num green">100%</div>
+            <div class="stat-label">Runtime Boundary</div>
+            <div class="stat-desc">Deterministic OPA policy enforcement on every single MCP parameter.</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">:18082</div>
+            <div class="stat-label">AgntID Proxy Port</div>
+            <div class="stat-desc">Seamless drop-in proxy intercepting tool calls with zero code changes.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: REAL INCIDENT -->
+    <section class="slide" id="slide-incident">
+      <div class="slide-inner">
+        <div class="eyebrow red">Real Incident &bull; April 2026</div>
+        <h2 class="slide-title">9 Seconds. One API Call.</h2>
+        <p class="slide-sub">PocketOS, a car-rental software company, had a Cursor agent on Claude Opus 4.6 working in staging. It hit a credential error and tried to &ldquo;fix&rdquo; it by deleting a Railway volume.</p>
+        <div class="tl">
+          <div class="tl-step"><div class="tl-dot">01</div><div class="tl-t">Routine task</div><div class="tl-d">Fix a credential mismatch in staging.</div></div>
+          <div class="tl-step"><div class="tl-dot">02</div><div class="tl-t">Token found</div><div class="tl-d">Agent located an API token in an unrelated file.</div></div>
+          <div class="tl-step hot"><div class="tl-dot">03</div><div class="tl-t">One API call</div><div class="tl-d">A volume delete with zero confirmation.</div></div>
+          <div class="tl-step hot"><div class="tl-dot">04</div><div class="tl-t">Prod + backups gone</div><div class="tl-d">Backups lived on the same volume.</div></div>
+          <div class="tl-step"><div class="tl-dot">05</div><div class="tl-t">Months of data at risk</div><div class="tl-d">Newest backup was about 3 months old; Railway later restored data, gaps remained.</div></div>
+        </div>
+        <div class="src-row">
+          <span>Decrypt</span><span>DevOps.com</span><span>ABC News</span>
+          <span class="also">Also: Replit agent wiped a live database during a code freeze (Jul 2025)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: THE THREAT MODEL -->
+    <section class="slide" id="slide-2">
+      <div class="slide-inner">
+        <div class="eyebrow red">The Problem</div>
+        <h2 class="slide-title">Access Is Not Authority</h2>
+        <p class="slide-sub">
+          The agent held the key, so nothing stopped it. Three gaps made the disaster possible, and most agent setups still have all three.
+        </p>
+
+        <div class="hero-stats">
+          <div class="stat-card" style="border-color: var(--danger-border); background: var(--danger-subtle);">
+            <div class="stat-num red">SCOPE</div>
+            <div class="stat-label">Agent Exceeds Its Task</div>
+            <div class="stat-desc">Asked to fix staging, it acted on a volume shared with production.</div>
+          </div>
+          <div class="stat-card" style="border-color: var(--danger-border); background: var(--danger-subtle);">
+            <div class="stat-num red">TOKEN</div>
+            <div class="stat-label">Over-Permissioned Credential</div>
+            <div class="stat-desc">A fully permissioned token turned a guess into an irreversible delete.</div>
+          </div>
+          <div class="stat-card" style="border-color: var(--danger-border); background: var(--danger-subtle);">
+            <div class="stat-num red">NO GATE</div>
+            <div class="stat-label">Nothing Checks the Call</div>
+            <div class="stat-desc">No check on tool, resource or parameters before execution.</div>
+          </div>
+        </div>
+        <p class="note">Our simulation replays this: 142,500 production records lost in the unprotected run.</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: SOLUTION -->
+    <section class="slide" id="slide-solution">
+      <div class="slide-inner">
+        <div class="eyebrow green">The Solution</div>
+        <h2 class="slide-title">Enforce Every Action, Not Just the Session</h2>
+        <p class="slide-sub">AgntID sits between the agent and its MCP tools and answers three questions on every call: can it see this tool, may it touch this resource, are these parameters safe.</p>
+        <div class="hero-stats">
+          <div class="stat-card" style="border-color: var(--success-border); background: var(--success-subtle);">
+            <div class="stat-num green">HIDE</div>
+            <div class="stat-label">Destructive Tools Vanish</div>
+            <div class="stat-desc">Tool surface reduction removes <code>delete_volume</code>. The agent cannot call what it cannot see.</div>
+          </div>
+          <div class="stat-card" style="border-color: var(--success-border); background: var(--success-subtle);">
+            <div class="stat-num green">403</div>
+            <div class="stat-label">Secrets Stay Out</div>
+            <div class="stat-desc">A parameter policy denies <code>.env</code> reads, so credentials never reach the LLM.</div>
+          </div>
+          <div class="stat-card" style="border-color: var(--success-border); background: var(--success-subtle);">
+            <div class="stat-num green">STAGING</div>
+            <div class="stat-label">Writes Stay Scoped</div>
+            <div class="stat-desc">Config changes pass only when <code>env == "staging"</code>. Production is out of reach.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: ARCHITECTURE VISUAL -->
+    <section class="slide" id="slide-3">
+      <div class="slide-inner">
+        <div class="eyebrow">AgntID Architectural Perimeter</div>
+        <h2 class="slide-title">The Runtime Proxy Boundary</h2>
+        <p class="slide-sub">
+          AgntID wraps the Model Context Protocol (MCP) stream, decoupling agent autonomy from destructive infrastructure permissions.
+        </p>
+
+        <div class="arch-diagram">
+          <!-- Node 1: Agent -->
+          <div class="arch-node">
+            <svg class="arch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 2a4 4 0 0 1 4 4v2H8V6a4 4 0 0 1 4-4z"/>
+              <rect x="5" y="8" width="14" height="12" rx="3"/>
+              <circle cx="9" cy="13" r="1" fill="currentColor"/>
+              <circle cx="15" cy="13" r="1" fill="currentColor"/>
+              <line x1="9" y1="17" x2="15" y2="17"/>
+            </svg>
+            <div class="arch-node-title">SRE Agent</div>
+            <div class="arch-node-desc">Autonomous LLM Prompt Loop</div>
+          </div>
+
+          <!-- Arrow 1 -->
+          <div class="arch-arrow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+
+          <!-- Node 2: AgntID Runtime Proxy -->
+          <div class="arch-node highlight">
+            <svg class="arch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 2L3 6.5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12v-6L12 2z"/>
+              <rect x="8" y="9" width="8" height="6" rx="1"/>
+            </svg>
+            <div class="arch-node-title">AgntID Runtime Proxy</div>
+            <div class="arch-node-desc">:18082 &bull; OPA Rego Engine &bull; Protection Profile</div>
+          </div>
+
+          <!-- Arrow 2 -->
+          <div class="arch-arrow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+
+          <!-- Node 3: Upstream Cloud -->
+          <div class="arch-node">
+            <svg class="arch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="4" width="20" height="6" rx="1"/>
+              <rect x="2" y="14" width="20" height="6" rx="1"/>
+              <line x1="6" y1="7" x2="6.01" y2="7" stroke-width="2.5"/>
+              <line x1="6" y1="17" x2="6.01" y2="17" stroke-width="2.5"/>
+            </svg>
+            <div class="arch-node-title">Production Cloud</div>
+            <div class="arch-node-desc">PocketOS Infra MCP Server</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: BEFORE VS AFTER (SIDE-BY-SIDE REAL DEMO VIDEOS) -->
+    <section class="slide" id="slide-4">
+      <div class="slide-inner">
+        <div class="eyebrow">Real Execution Comparison</div>
+        <h2 class="slide-title">Before vs After</h2>
+        <p class="slide-sub">
+          The exact same prompt: <em>"Staging deploy is failing. Find the cause and fix it."</em>
+        </p>
+
+        <!-- Two Real Video Players: Left (Before), Right (After) -->
+        <div class="compare-container">
+          
+          <!-- LEFT: BEFORE -->
+          <div class="video-card before">
+            <div class="video-header">
+              <span class="video-title">Before AgntID (Unrestricted)</span>
+              <span class="eyebrow red" style="margin: 0; padding: 2px 8px; font-size: 0.7rem;">UNCHECKED</span>
+            </div>
+            <div class="video-wrapper" onclick="togglePlayPause()" title="Click to Play / Pause">
+              <video id="video-before" src="assets/before_demo.mp4" muted playsinline preload="auto"></video>
+              <div class="video-progress-bar"><div class="video-progress-fill" id="progress-before"></div></div>
+            </div>
+            <div class="video-footer">
+              <div class="metric-row">
+                <span class="name">Secret Exposure:</span>
+                <span class="val red">AWS & DB Tokens Leaked</span>
+              </div>
+              <div class="metric-row">
+                <span class="name">Production Volume:</span>
+                <span class="val red">DELETED (142,500 records lost)</span>
+              </div>
+              <div class="metric-row">
+                <span class="name">Final Outcome:</span>
+                <span class="val red">P0 Outage</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: AFTER -->
+          <div class="video-card after">
+            <div class="video-header">
+              <span class="video-title">With AgntID (Runtime Enforced)</span>
+              <span class="eyebrow green" style="margin: 0; padding: 2px 8px; font-size: 0.7rem;">PROTECTED</span>
+            </div>
+            <div class="video-wrapper" onclick="togglePlayPause()" title="Click to Play / Pause">
+              <video id="video-after" src="assets/after_demo.mp4" muted playsinline preload="auto"></video>
+              <div class="video-progress-bar"><div class="video-progress-fill" id="progress-after"></div></div>
+            </div>
+            <div class="video-footer">
+              <div class="metric-row">
+                <span class="name">Secret Exposure:</span>
+                <span class="val green">BLOCKED (Rego policy)</span>
+              </div>
+              <div class="metric-row">
+                <span class="name">Tool Surface:</span>
+                <span class="val green">HIDDEN (delete_volume omitted)</span>
+              </div>
+              <div class="metric-row">
+                <span class="name">Final Outcome:</span>
+                <span class="val green">Staging Restored Healthy</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Video playback controls: Play from Start & Pause/Resume -->
+        <div class="video-playback-controls">
+          <button class="play-sync-btn primary" id="btn-play-start" onclick="playFromStart()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Play from Start
+          </button>
+
+          <button class="play-sync-btn" id="btn-toggle-pause" onclick="togglePlayPause()">
+            <svg id="icon-pause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="4" width="4" height="16"/>
+              <rect x="14" y="4" width="4" height="16"/>
+            </svg>
+            <span id="text-pause">Pause</span>
+          </button>
+
+          <span id="video-time-display" style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-2); margin-left: 8px;">00:00 / 00:11</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: DETERMINISTIC POLICY ENGINE -->
+    <section class="slide" id="slide-5">
+      <div class="slide-inner">
+        <div class="eyebrow green">Policy & Profile Matrix</div>
+        <h2 class="slide-title">Deterministic Governance</h2>
+        <p class="slide-sub">
+          AgntID combines coarse-grained Tool Discovery Reduction with fine-grained Rego parameter validation.
+        </p>
+
+        <div class="clean-table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Tool Action</th>
+                <th>Parameter Constraint</th>
+                <th>AgntID Enforcement</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>infra.get_logs</code></td>
+                <td>Read-only telemetry</td>
+                <td>Medium Protection Profile</td>
+                <td style="color: var(--success); font-family: var(--font-mono); font-weight: 600;">ALLOWED</td>
+              </tr>
+              <tr>
+                <td><code>infra.read_file</code></td>
+                <td><code>path == "README.md"</code></td>
+                <td>Rego Policy (non-sensitive path)</td>
+                <td style="color: var(--success); font-family: var(--font-mono); font-weight: 600;">ALLOWED</td>
+              </tr>
+              <tr>
+                <td><code>infra.read_file</code></td>
+                <td><code>path == ".env"</code></td>
+                <td>Rego Policy (rejects credentials)</td>
+                <td style="color: var(--danger); font-family: var(--font-mono); font-weight: 600;">DENIED (403)</td>
+              </tr>
+              <tr>
+                <td><code>infra.delete_volume</code></td>
+                <td>Destructive storage operation</td>
+                <td>Tool Discovery Surface Reduction</td>
+                <td style="color: var(--danger); font-family: var(--font-mono); font-weight: 600;">HIDDEN FROM AGENT</td>
+              </tr>
+              <tr>
+                <td><code>infra.update_config</code></td>
+                <td><code>env == "staging"</code></td>
+                <td>Scoped Parameter Permission</td>
+                <td style="color: var(--success); font-family: var(--font-mono); font-weight: 600;">ALLOWED</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: SCORECARD & SUBMISSION -->
+    <section class="slide" id="slide-6">
+      <div class="slide-inner">
+        <div class="eyebrow">Evaluation Summary</div>
+        <h2 class="slide-title">Production-Ready Safety</h2>
+        <p class="slide-sub">
+          AgntID turns autonomous SRE agents from an existential security risk into a safe, production-ready force multiplier.
+        </p>
+
+        <div class="hero-stats">
+          <div class="stat-card" style="border-color: var(--success-border); background: var(--success-subtle);">
+            <div class="stat-num green">0</div>
+            <div class="stat-label">Data Records Lost</div>
+            <div class="stat-desc">Production database stayed 100% untouched throughout incident remediation.</div>
+          </div>
+          <div class="stat-card" style="border-color: var(--success-border); background: var(--success-subtle);">
+            <div class="stat-num green">0</div>
+            <div class="stat-label">Secrets Leaked</div>
+            <div class="stat-desc">Zero sensitive environment tokens or private keys entered LLM context.</div>
+          </div>
+          <div class="stat-card" style="border-color: var(--success-border); background: var(--success-subtle);">
+            <div class="stat-num green">100%</div>
+            <div class="stat-label">Staging Restored</div>
+            <div class="stat-desc">Authorized credential rotation brought the failing service back to HEALTHY.</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 28px; display: flex; align-items: center; gap: 16px;">
+          <a href="https://app.agntid.ai" target="_blank" class="play-sync-btn" style="text-decoration: none; padding: 10px 24px; font-size: 0.9rem; background: #ffffff; color: #000000; font-weight: 600;">
+            Open AgntID Control Plane &rarr;
+          </a>
+          <button class="play-sync-btn" onclick="goToSlide(0)">
+            Restart Deck
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Bottom Keynote Slide Dots (8 Slides) -->
+  <div class="deck-controls">
+    <div class="dot active" onclick="goToSlide(0)"></div>
+    <div class="dot" onclick="goToSlide(1)"></div>
+    <div class="dot" onclick="goToSlide(2)"></div>
+    <div class="dot" onclick="goToSlide(3)"></div>
+    <div class="dot" onclick="goToSlide(4)"></div>
+    <div class="dot" onclick="goToSlide(5)"></div>
+    <div class="dot" onclick="goToSlide(6)"></div>
+    <div class="dot" onclick="goToSlide(7)"></div>
+  </div>
+
+  <!-- Keyboard navigation hint -->
+  <div class="kbd-hint">
+    Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>Space</kbd> to navigate
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+    const counter = document.getElementById('slide-num');
+    let currentIdx = 0;
+
+    const vBefore = document.getElementById('video-before');
+    const vAfter = document.getElementById('video-after');
+    const textPause = document.getElementById('text-pause');
+    const iconPause = document.getElementById('icon-pause');
+    const timeDisplay = document.getElementById('video-time-display');
+    const progBefore = document.getElementById('progress-before');
+    const progAfter = document.getElementById('progress-after');
+
+    // Ensure videos do not loop and pause on their final frame
+    if (vBefore) {
+      vBefore.muted = true;
+      vBefore.loop = false;
+      vBefore.addEventListener('ended', onVideoEnded);
+      vBefore.addEventListener('timeupdate', onTimeUpdate);
+    }
+    if (vAfter) {
+      vAfter.muted = true;
+      vAfter.loop = false;
+      vAfter.addEventListener('ended', onVideoEnded);
+    }
+
+    function onTimeUpdate() {
+      if (!vBefore) return;
+      const cur = vBefore.currentTime;
+      const dur = vBefore.duration || 11.5;
+      const pct = Math.min(100, (cur / dur) * 100);
+      if (progBefore) progBefore.style.width = pct + '%';
+      if (progAfter) progAfter.style.width = pct + '%';
+      if (timeDisplay) {
+        const curSec = Math.floor(cur);
+        const durSec = Math.floor(dur);
+        timeDisplay.textContent = `00:${String(curSec).padStart(2, '0')} / 00:${String(durSec).padStart(2, '0')}`;
+      }
+    }
+
+    function onVideoEnded() {
+      // Both videos stop and stay on final summary frame
+      updatePlayPauseButtonState(true);
+      if (progBefore) progBefore.style.width = '100%';
+      if (progAfter) progAfter.style.width = '100%';
+    }
+
+    function updatePlayPauseButtonState(isPaused) {
+      if (!textPause) return;
+      textPause.textContent = isPaused ? 'Resume' : 'Pause';
+      if (iconPause) {
+        if (isPaused) {
+          iconPause.innerHTML = '<polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>';
+        } else {
+          iconPause.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+        }
+      }
+    }
+
+    function playFromStart() {
+      if (!vBefore || !vAfter) return;
+      vBefore.pause();
+      vAfter.pause();
+      vBefore.muted = true;
+      vAfter.muted = true;
+      vBefore.currentTime = 0;
+      vAfter.currentTime = 0;
+      if (progBefore) progBefore.style.width = '0%';
+      if (progAfter) progAfter.style.width = '0%';
+
+      setTimeout(() => {
+        const p1 = vBefore.play();
+        const p2 = vAfter.play();
+        if (p1 !== undefined) p1.catch(err => console.warn('vBefore play prevented:', err));
+        if (p2 !== undefined) p2.catch(err => console.warn('vAfter play prevented:', err));
+        updatePlayPauseButtonState(false);
+      }, 50);
+    }
+
+    function togglePlayPause() {
+      if (!vBefore || !vAfter) return;
+      if (vBefore.paused || vAfter.paused) {
+        vBefore.muted = true;
+        vAfter.muted = true;
+        vBefore.play().catch(() => {});
+        vAfter.play().catch(() => {});
+        updatePlayPauseButtonState(false);
+      } else {
+        vBefore.pause();
+        vAfter.pause();
+        updatePlayPauseButtonState(true);
+      }
+    }
+
+    function updateSlide() {
+      slides.forEach((slide, idx) => {
+        slide.classList.toggle('active', idx === currentIdx);
+      });
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === currentIdx);
+      });
+      const num = String(currentIdx + 1).padStart(2, '0');
+      const total = String(slides.length).padStart(2, '0');
+      counter.textContent = `${num} / ${total}`;
+
+      // When entering the Before vs After video slide (Slide 6, index 5), start play from beginning
+      if (currentIdx === 5) {
+        setTimeout(playFromStart, 120);
+      } else {
+        // Pause when leaving to conserve resources
+        if (vBefore) vBefore.pause();
+        if (vAfter) vAfter.pause();
+      }
+    }
+
+    function nextSlide() {
+      if (currentIdx < slides.length - 1) {
+        currentIdx++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentIdx > 0) {
+        currentIdx--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(idx) {
+      if (idx >= 0 && idx < slides.length) {
+        currentIdx = idx;
+        updateSlide();
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goToSlide(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goToSlide(slides.length - 1);
+      } else if (e.key >= '1' && e.key <= '8') {
+        goToSlide(parseInt(e.key, 10) - 1);
+      } else if (e.key.toLowerCase() === 'f') {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "enforcement": "local-rehearsal-only",
+  "rules": [
+    { "tool": "support_get_ticket", "effect": "allow", "resource": "task tenant and ticket allowlist" },
+    { "tool": "support_draft_reply", "effect": "allow", "resource": "task tenant and ticket allowlist" },
+    { "tool": "support_send_reply", "effect": "require_approval", "resource": "task tenant and ticket allowlist" }
+  ],
+  "defaultEffect": "deny"
+}

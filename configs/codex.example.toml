@@ -1,0 +1,12 @@
+# Merge named entries into your existing config; do not replace the file.
+[mcp_servers.devfolio]
+url = "https://mcp.devfolio.co/mcp"
+
+# Only for the local fixture rehearsal. Never use this direct path as evidence
+# of AgntID enforcement. Start the server with npm run dev first.
+[mcp_servers.agntid_rehearsal]
+url = "http://127.0.0.1:8787/mcp"
+
+# Add the platform-issued proxy separately after reviewing its Quick Start.
+# [mcp_servers.agntid_tools]
+# url = "<exact proxy URL from your AgntID workspace>"

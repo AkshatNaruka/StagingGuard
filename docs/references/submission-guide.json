@@ -1,0 +1,122 @@
+{
+  "fieldCompletionGuidance": "For draft requests, provide fields marked requiredForDraft. Publish requests must provide all fields marked required.\n\nRequired organizer project fields may be omitted from drafts but must have matching non-empty projectFieldAnswers before publishing.\n\nOptional fields should still be filled when the user has the information; complete submissions are easier to judge.\n\nPictures must be real screenshots of the running project, not generated stand-ins.",
+  "submissionValidationNotes": [
+    "Hackathon drafts may omit publish-only fields and remain below publish minimums; maximums and supplied-value formats still apply.",
+    "Publish name length: 2-50 characters; draft maximum: 50 characters.",
+    "Publish tagline length: 2-50 characters; draft maximum: 50 characters.",
+    "Publish commit length: 2-50 characters; draft maximum: 50 characters.",
+    "Publish pictures: 1-6; draft maximum: 6.",
+    "Publish links: 0-5; draft maximum: 5.",
+    "Publish platforms: 0-5; draft maximum: 5."
+  ],
+  "toolInputGuide": [
+    {
+      "description": "Hackathon slug or UUID.",
+      "key": "hackathonSlug",
+      "required": true,
+      "requiredForDraft": true
+    },
+    {
+      "description": "Project name. Publish name length: 2-50 characters; draft maximum: 50 characters.",
+      "key": "name",
+      "required": true,
+      "requiredForDraft": true
+    },
+    {
+      "description": "Tagline. Publish tagline length: 2-50 characters; draft maximum: 50 characters.",
+      "key": "tagline",
+      "required": true,
+      "requiredForDraft": true
+    },
+    {
+      "description": "`draft` or `publish`.",
+      "key": "status",
+      "required": false,
+      "requiredForDraft": false
+    },
+    {
+      "description": "Commit object. Publish commit message length: 2-50 characters; draft maximum: 50 characters.",
+      "key": "commit",
+      "required": false,
+      "requiredForDraft": false
+    },
+    {
+      "description": "Technologies array. Draft count may be 0-10; publish count must be 1-10.",
+      "key": "hashtags",
+      "required": true,
+      "requiredForDraft": false
+    },
+    {
+      "description": "Target platforms. Draft count may be 0-5; publish count must be 0-5.",
+      "key": "platforms",
+      "required": false,
+      "requiredForDraft": false
+    },
+    {
+      "description": "Storage paths or URLs for real project screenshots. Draft count may be 0-6; publish count must be 1-6.",
+      "key": "pictures",
+      "required": true,
+      "requiredForDraft": false
+    },
+    {
+      "description": "Project links. Draft count may be 0-5; publish count must be 0-5. Include a public repository URL when available.",
+      "key": "links",
+      "required": false,
+      "requiredForDraft": false
+    },
+    {
+      "description": "Demo or pitch video URL.",
+      "key": "video_url",
+      "required": false,
+      "requiredForDraft": false
+    },
+    {
+      "description": "Project logo storage path or URL.",
+      "key": "favicon",
+      "required": false,
+      "requiredForDraft": false
+    },
+    {
+      "description": "Cover image storage path or URL.",
+      "key": "cover_img",
+      "required": false,
+      "requiredForDraft": false
+    },
+    {
+      "description": "Array of { projectFieldUUID, value }; required organizer fields must be covered.",
+      "key": "projectFieldAnswers",
+      "required": true,
+      "requiredForDraft": false
+    }
+  ],
+  "flow": "create_hackathon_project",
+  "projectFields": [
+    {
+      "uuid": "95c8281c6a904f6eb0e177f75307f4a4",
+      "name": "The problem it solves",
+      "type": "long",
+      "value": null,
+      "description": "Describe the use case and how your agent's workflow addresses it. Explain which AgntID controls you used, where they apply, and what changed as a result. Include a before-and-after example to show the impact.",
+      "options": null,
+      "placeholder": null,
+      "hint": null,
+      "required": true,
+      "private": false,
+      "order": 1
+    },
+    {
+      "uuid": "61671edfc8ca422aab34acb24586e5d2",
+      "name": "Challenges we ran into",
+      "type": "long",
+      "value": null,
+      "description": "tell us about any specific bug or hurdle you ran into while building this project. how did you get over it? (markdown supported)",
+      "options": null,
+      "placeholder": null,
+      "hint": null,
+      "required": true,
+      "private": false,
+      "order": 2
+    }
+  ],
+  "hackathonSlug": "agntid"
+}

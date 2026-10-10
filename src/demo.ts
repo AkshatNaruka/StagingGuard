@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { createContext } from './config.js';
+import { RehearsalRuntime } from './runtime.js';
+import type { ToolOutcome } from './runtime.js';
+
+await mkdir('artifacts', { recursive: true });
+const directory = join('.local', `demo-${randomUUID()}`);
+let now = Date.now();
+const context = createContext(now, {});
+const runtime = await RehearsalRuntime.create(context, { directory, clock: () => now });
+const reply = 'Use the password reset link on the sign-in page. We never ask for your password.';
+const results: Array<{ scenario: string; result: ToolOutcome }> = [];
+async function scenario(name: string, tool: string, args: unknown, expected: string) {
+  const result = await runtime.call(tool, args);
+  assert.equal(result.code, expected);
+  results.push({ scenario: name, result });
+  console.log(`${name}: ${result.code}`);
+  return result;
+}
+console.log('LOCAL REHEARSAL — synthetic fixtures and scripted reviewer, no AgntID connection or model call.');
+await scenario('Task ticket read', 'support_get_ticket', { ticketId: 'T100' }, 'TICKET_READ');
+await scenario('Same tenant, outside task', 'support_get_ticket', { ticketId: 'T101' }, 'RESOURCE_DENIED');
+await scenario('Cross-tenant read', 'support_get_ticket', { ticketId: 'T200' }, 'RESOURCE_DENIED');
+await scenario('Prepare response', 'support_draft_reply', { ticketId: 'T100', reply }, 'REPLY_DRAFTED');
+const pending = await scenario('Write waits for reviewer', 'support_send_reply', { ticketId: 'T100', reply }, 'APPROVAL_REQUIRED');
+assert.ok(pending.approvalRequestId);
+assert.equal(runtime.outbox.length, 0);
+await runtime.approvals.approve(pending.approvalRequestId, now);
+await scenario('Changed text needs new approval', 'support_send_reply', { ticketId: 'T100', reply: `${reply} Changed.` }, 'APPROVAL_REQUIRED');
+await scenario('Exact approved response', 'support_send_reply', { ticketId: 'T100', reply }, 'REPLY_SENT_TO_FIXTURE');
+await scenario('Consumed approval cannot replay', 'support_send_reply', { ticketId: 'T100', reply }, 'APPROVAL_REQUIRED');
+now = context.expiresAt;
+await scenario('Expired task blocked', 'support_get_ticket', { ticketId: 'T100' }, 'TASK_EXPIRED');
+assert.equal(runtime.outbox.length, 1);
+await writeFile('artifacts/local-rehearsal.json', JSON.stringify({ enforcement: 'local-rehearsal-only', results, syntheticOutboxCount: runtime.outbox.length }, null, 2));
+await writeFile('artifacts/local-audit.jsonl', runtime.events.map((event) => JSON.stringify(event)).join('\n') + '\n');
+console.log('Saved artifacts/local-rehearsal.json and artifacts/local-audit.jsonl.');

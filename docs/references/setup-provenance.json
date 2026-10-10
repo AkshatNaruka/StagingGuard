@@ -1,0 +1,24 @@
+{
+  "verifiedOn": "2026-10-09",
+  "officialCompose": {
+    "url": "https://raw.githubusercontent.com/AGNTID-AI/agntid-python/main/docker-compose.yml",
+    "sha256": "d9a4392008927a0579f493d7fb0b84f5fbeb4fcd2b18ff1e8a36dd2168b983a0",
+    "reportedVersion": "2.0.0"
+  },
+  "runtimeImage": "ghcr.io/agntid-ai/achr-runtime@sha256:b60ae936182d17689a1a4e226c8d636af600fa5f52b199118f66b84978735870",
+  "intentParserImage": "ghcr.io/agntid-ai/intent-parser-ml@sha256:766dc783c93dc9dc3faf48d8a4f9bc962567b229caf47453ca958aed9a29c832",
+  "pythonSdk": {
+    "repository": "https://github.com/AGNTID-AI/agntid-python",
+    "commit": "f4fcd2fe476f0c4dcf800e498530b7042b830f6b",
+    "version": "0.2.0",
+    "python": "3.11.16"
+  },
+  "officialDocs": {
+    "url": "https://docs.agntid.ai/downloads/agntid-context.md",
+    "sha256": "17e35e0ec25bcb61dcbb32c7eddf6ee29c50a433b454007185a8b799ef215fc8",
+    "reportedVersion": "development",
+    "reportedSourceCommit": "unknown",
+    "generatedAt": "2026-10-09T07:17:04Z",
+    "access": "authenticated documentation downloaded by the account owner session"
+  }
+}

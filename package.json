@@ -1,0 +1,37 @@
+{
+  "name": "agntid-hackathon-starter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP tool server and permission rehearsal for the AgntID Hackathon",
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "doctor": "node --env-file-if-exists=.env scripts/doctor.mjs",
+    "dev": "node --env-file-if-exists=.env --import tsx src/server.ts",
+    "start": "node --env-file-if-exists=.env dist/server.js",
+    "demo": "node --env-file-if-exists=.env --import tsx src/demo.ts",
+    "demo:stagingguard": "node --env-file-if-exists=.env scripts/run-python.mjs agent/stagingguard.py",
+    "test:stagingguard": "node scripts/run-python.mjs -m unittest discover -s server -p 'test_*.py'",
+    "probe:local": "node --env-file-if-exists=.env --import tsx src/probe.ts --local",
+    "probe:agntid": "node --env-file-if-exists=.env --import tsx src/probe.ts --agntid",
+    "approve": "node --env-file-if-exists=.env --import tsx src/approve.ts",
+    "setup:sdk": "sh scripts/setup-agntid-sdk.sh",
+    "smoke:agntid": "node --env-file-if-exists=.env scripts/run-python.mjs examples/agntid_smoke.py",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.3.1",
+    "@modelcontextprotocol/node": "2.1.1",
+    "@modelcontextprotocol/server": "2.3.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2"
+  }
+}
