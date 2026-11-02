@@ -1,4 +1,4 @@
 # Install only in the isolated official SDK environment.
 # Official SDK source is pinned by scripts/setup-agntid-sdk.sh.
-fastmcp==2.14.7
+fastmcp==3.2.0
 rich==14.3.4
